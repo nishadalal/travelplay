@@ -20,4 +20,4 @@ line-length = 100
 
 [tool.pytest.ini_options]
 addopts = "-q"
-testpaths = ["tests"]
+# testpaths = ["tests"]
