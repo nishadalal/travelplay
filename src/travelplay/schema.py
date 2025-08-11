@@ -1,10 +1,9 @@
-from pydantic import BaseModel, Field, ValidationError, field_validator
-from typing import List
+from pydantic import BaseModel, Field, field_validator
 
 
 class QuizItem(BaseModel):
     q: str = Field(..., min_length=3)
-    a: List[str] = Field(..., min_items=2)
+    a: list[str] = Field(..., min_items=2)
     correct: int = Field(..., ge=0)
 
     @field_validator("correct")
@@ -19,5 +18,5 @@ class Worksheet(BaseModel):
     title: str = Field(..., min_length=3)
     age: int = Field(..., ge=3, le=12)
     destination: str = Field(..., min_length=2)
-    fun_facts: List[str] = Field(default_factory=list, max_items=5)
-    quiz: List[QuizItem] = Field(default_factory=list)
+    fun_facts: list[str] = Field(default_factory=list, max_items=5)
+    quiz: list[QuizItem] = Field(default_factory=list)

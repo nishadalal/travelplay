@@ -1,5 +1,6 @@
 import pytest
-from src.travelplay.schema import Worksheet, QuizItem
+
+from src.travelplay.schema import QuizItem, Worksheet
 
 
 def test_quiz_index_validation():

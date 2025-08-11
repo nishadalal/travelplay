@@ -1,25 +1,23 @@
 import logging
 from typing import Iterable
 
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
 from langchain.output_parsers import PydanticOutputParser
-from langchain_core.runnables import Runnable, RunnableWithFallbacks
-
-from .config import get_settings
-from .schema import Worksheet
-from .prompts import SYSTEM_PROMPT, user_prompt
-
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import Runnable
+from langchain_openai import ChatOpenAI
 from openai import (  # error classes for retry classification
-    RateLimitError,
     APIConnectionError,
     APITimeoutError,
-    BadRequestError,
     AuthenticationError,
+    BadRequestError,
     OpenAIError,
+    RateLimitError,
 )
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+
+from .config import get_settings
+from .prompts import SYSTEM_PROMPT, user_prompt
+from .schema import Worksheet
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 SETTINGS = get_settings()
@@ -92,7 +90,7 @@ def call_llm_json(age: int, destination: str) -> Worksheet:
                 f"Kids in {destination} love local snacks!",
             ],
             quiz=[
-                {"q": f"Where are we visiting?", "a": ["Paris", destination, "Rome"], "correct": 1},
+                {"q": "Where are we visiting?", "a": ["Paris", destination, "Rome"], "correct": 1},
                 {"q": "How many options per question?", "a": ["2", "3", "5"], "correct": 1},
                 {"q": "Should you try local food?", "a": ["No", "Maybe", "Yes"], "correct": 2},
             ],
