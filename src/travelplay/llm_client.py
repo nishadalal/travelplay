@@ -2,17 +2,10 @@ import logging
 from typing import Iterable
 
 from langchain.output_parsers import PydanticOutputParser
+from langchain_core.exceptions import OutputParserException
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable
 from langchain_openai import ChatOpenAI
-from openai import (  # error classes for retry classification
-    APIConnectionError,
-    APITimeoutError,
-    AuthenticationError,
-    BadRequestError,
-    OpenAIError,
-    RateLimitError,
-)
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from .config import get_settings
@@ -70,14 +63,15 @@ def _build_chain_with_fallbacks() -> Runnable:
     reraise=True,
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=1, max=8),
+    # Be generic: network hiccups, parser issues, transient provider errors
     retry=retry_if_exception_type(
-        (RateLimitError, APIConnectionError, APITimeoutError, OpenAIError)
+        (OutputParserException, TimeoutError, ConnectionError, RuntimeError, Exception)
     ),
 )
 def call_llm_json(age: int, destination: str) -> Worksheet:
     """
-    Public entrypoint: build user_input from (age, destination),
-    call the chain with fallbacks, and return a validated Worksheet.
+    Build user_input from (age, destination), call LangChain pipeline with fallbacks,
+    and return a validated Worksheet. No vendor-specific imports.
     """
     if SETTINGS.mock_mode:
         logging.warning("MOCK_MODE=true → returning canned Worksheet")
@@ -97,19 +91,5 @@ def call_llm_json(age: int, destination: str) -> Worksheet:
         )
 
     chain = _build_chain_with_fallbacks()
-    # 🔹 Build the actual user_input string here
     user_input_text = user_prompt(age=age, destination=destination)
-
-    try:
-        return chain.invoke({"user_input": user_input_text})
-    except AuthenticationError as e:
-        logging.error(
-            "Auth error: %s\nTips: 1) Use a Project API key with 'model.request' scope. "
-            "2) Set OPENAI_ORG_ID/OPENAI_PROJECT if applicable. "
-            "3) Verify via curl that the key can list models.",
-            e,
-        )
-        raise
-    except BadRequestError as e:
-        logging.error("Bad request. Check model name and parameters: %s", e)
-        raise
+    return chain.invoke({"user_input": user_input_text})
