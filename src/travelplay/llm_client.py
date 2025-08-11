@@ -13,18 +13,24 @@ from .schema import Worksheet
 from .prompts import SYSTEM_PROMPT, user_prompt
 
 from openai import (  # error classes for retry classification
-    RateLimitError, APIConnectionError, APITimeoutError,
-    BadRequestError, AuthenticationError, OpenAIError
+    RateLimitError,
+    APIConnectionError,
+    APITimeoutError,
+    BadRequestError,
+    AuthenticationError,
+    OpenAIError,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 SETTINGS = get_settings()
+
 
 def _models_in_order() -> Iterable[str]:
     yield SETTINGS.model_primary
     for m in SETTINGS.model_fallbacks:
         if m != SETTINGS.model_primary:
             yield m
+
 
 def _make_llm(model_name: str) -> ChatOpenAI:
     return ChatOpenAI(
@@ -36,18 +42,22 @@ def _make_llm(model_name: str) -> ChatOpenAI:
         model_kwargs={"response_format": {"type": "json_object"}},
     )
 
+
 def _build_chain_for_model(model_name: str) -> Runnable:
     llm = _make_llm(model_name)
     parser = PydanticOutputParser(pydantic_object=Worksheet)
     format_instructions = parser.get_format_instructions()
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", SYSTEM_PROMPT + "\n{format_instructions}"),
-        ("user", "{user_input}"),
-    ]).partial(format_instructions=format_instructions)
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", SYSTEM_PROMPT + "\n{format_instructions}"),
+            ("user", "{user_input}"),
+        ]
+    ).partial(format_instructions=format_instructions)
 
     # prompt -> llm -> parser returns a Worksheet instance
     return prompt | llm | parser
+
 
 def _build_chain_with_fallbacks() -> Runnable:
     chains = [_build_chain_for_model(m) for m in _models_in_order()]
@@ -57,11 +67,14 @@ def _build_chain_with_fallbacks() -> Runnable:
         return chains[0]
     return chains[0].with_fallbacks(chains[1:])
 
+
 @retry(
     reraise=True,
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=1, max=8),
-    retry=retry_if_exception_type((RateLimitError, APIConnectionError, APITimeoutError, OpenAIError)),
+    retry=retry_if_exception_type(
+        (RateLimitError, APIConnectionError, APITimeoutError, OpenAIError)
+    ),
 )
 def call_llm_json(age: int, destination: str) -> Worksheet:
     """
@@ -76,7 +89,7 @@ def call_llm_json(age: int, destination: str) -> Worksheet:
             destination=destination,
             fun_facts=[
                 f"{destination} has a famous landmark.",
-                f"Kids in {destination} love local snacks!"
+                f"Kids in {destination} love local snacks!",
             ],
             quiz=[
                 {"q": f"Where are we visiting?", "a": ["Paris", destination, "Rome"], "correct": 1},
@@ -95,7 +108,8 @@ def call_llm_json(age: int, destination: str) -> Worksheet:
         logging.error(
             "Auth error: %s\nTips: 1) Use a Project API key with 'model.request' scope. "
             "2) Set OPENAI_ORG_ID/OPENAI_PROJECT if applicable. "
-            "3) Verify via curl that the key can list models.", e
+            "3) Verify via curl that the key can list models.",
+            e,
         )
         raise
     except BadRequestError as e:

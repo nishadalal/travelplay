@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from typing import List
 
+
 class QuizItem(BaseModel):
     q: str = Field(..., min_length=3)
     a: List[str] = Field(..., min_items=2)
@@ -12,6 +13,7 @@ class QuizItem(BaseModel):
         if not (0 <= v < len(a)):
             raise ValueError("correct index must be within range of answers")
         return v
+
 
 class Worksheet(BaseModel):
     title: str = Field(..., min_length=3)

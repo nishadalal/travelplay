@@ -1,6 +1,7 @@
 import argparse
 from .llm_client import call_llm_json
 
+
 def main():
     parser = argparse.ArgumentParser(description="Generate a kid travel worksheet (JSON).")
     parser.add_argument("--age", type=int, required=True)
@@ -9,6 +10,7 @@ def main():
 
     ws = call_llm_json(age=args.age, destination=args.destination)
     print(ws.model_dump_json(indent=2))
+
 
 if __name__ == "__main__":
     main()

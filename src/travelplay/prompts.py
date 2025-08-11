@@ -4,6 +4,7 @@ The JSON must match the provided schema keys and types exactly.
 Keep vocabulary age-appropriate and culturally respectful.
 """
 
+
 def user_prompt(age: int, destination: str) -> str:
     return f"""Create a small worksheet for a child.
 

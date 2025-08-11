@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 @dataclass(frozen=True)
 class Settings:
     openai_api_key: str
@@ -11,6 +12,7 @@ class Settings:
     model_fallbacks: list[str]
     timeout: float
     mock_mode: bool
+
 
 def get_settings() -> Settings:
     api_key = os.getenv("OPENAI_API_KEY")

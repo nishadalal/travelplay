@@ -1,6 +1,7 @@
 from fpdf import FPDF
 from ..schema import Worksheet
 
+
 def worksheet_to_pdf(ws: Worksheet, output_path: str) -> None:
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
